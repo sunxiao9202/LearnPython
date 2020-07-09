@@ -1,1 +1,0 @@
-{index} ------ {title} ------ {rating} ------ {year} ------ {area} ------ {type}
