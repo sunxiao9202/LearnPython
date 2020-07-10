@@ -1,79 +1,67 @@
-import time
 import threading
+import time
 from queue import Queue
 
 
-class MyThread(threading.Thread):
+class CustomThread(threading.Thread):
+    def __init__(self, queue):
+        threading.Thread.__init__(self)
+        self.__queue = queue
+
     def run(self):
-        for i in range(5):
-            print('thread {}, @number: {}'.format(self.name, i))
-            time.sleep(1)
+        while True:
+            q_method = self.__queue.get()
+            q_method()
+            self.__queue.task_done()
 
 
-def main():
-    print("Start main threading")
+def moyu():
+    print(" 开始摸鱼 %s" % (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
 
-    # 创建三个线程
-    threads = [MyThread() for i in range(3)]
 
-    # 启动三个线程
-    for t in threads:
+def queue_pool():
+    queue = Queue(5)
+    for i in range(queue.maxsize):
+        t = CustomThread(queue)
+        t.setDaemon(True)
         t.start()
 
-    # 一次性让新创建的线程执行 join
-    for t in threads:
-        t.join()
-
-    print("End Main Threading")
-
-
-class Consumer(threading.Thread):
-    def __init__(self, cond, name):
-        # 初始化
-        super(Consumer, self).__init__()
-        self.cond = cond
-        self.name = name
-
-    def run(self):
-        # 确保先运行Seeker中的方法
-        time.sleep(1)
-        self.cond.acquire()
-        print(self.name + ': 我这两件商品一起买，可以便宜点吗')
-        self.cond.notify()
-        self.cond.wait()
-        print(self.name + ': 我已经提交订单了，你修改下价格')
-        self.cond.notify()
-        self.cond.wait()
-        print(self.name + ': 收到，我支付成功了')
-        self.cond.notify()
-        self.cond.release()
-        print(self.name + ': 等待收货')
-
-
-class Producer(threading.Thread):
-    def __init__(self, cond, name):
-        super(Producer, self).__init__()
-        self.cond = cond
-        self.name = name
-
-    def run(self):
-        self.cond.acquire()
-        # 释放对琐的占用，同时线程挂起在这里，直到被 notify 并重新占有琐。
-        self.cond.wait()
-        print(self.name + ': 可以的，你提交订单吧')
-        self.cond.notify()
-        self.cond.wait()
-        print(self.name + ': 好了，已经修改了')
-        self.cond.notify()
-        self.cond.wait()
-        print(self.name + ': 嗯，收款成功，马上给你发货')
-        self.cond.release()
-        print(self.name + ': 发货商品')
+    for i in range(20):
+        queue.put(moyu)
+    queue.join()
 
 
 if __name__ == '__main__':
-    cond = threading.Condition()
-    consumer = Consumer(cond, '买家（两点水）')
-    producer = Producer(cond, '卖家（三点水）')
-    consumer.start()
-    producer.start()
+    queue_pool()
+
+# # 创建一个线程子类
+# class MyThread(threading.Thread):
+#     def __init__(self, threadID, name, counter):
+#         threading.Thread.__init__(self)
+#         self.threadID = threadID
+#         self.name = name
+#         self.counter = counter
+#
+#     def run(self):
+#         print("开始线程：" + self.name)
+#         moyu_time(self.name, self.counter, 10)
+#         print("退出线程：" + self.name)
+
+
+
+#
+#
+# # 创建新线程
+# # 小帅b找了两个人来摸鱼
+# # 让小明摸一次鱼休息1秒钟
+# # 让小红摸一次鱼休息2秒钟
+# thread1 = MyThread(1, "小明", 1)
+# thread2 = MyThread(2, "小红", 2)
+#
+# # 开启新线程
+# thread1.start()
+# thread2.start()
+# # 等待至线程中止
+# thread1.join()
+# thread2.join()
+# print("退出主线程")
