@@ -57,8 +57,9 @@ def save_to_excel(soup):
 
 def main(url):
     html = request_douban(url)
-    soup = BeautifulSoup(html, 'lxml')
-    save_to_excel(soup)
+    if (html):
+        soup = BeautifulSoup(html, 'lxml')
+        save_to_excel(soup)
 
 
 if __name__ == '__main__':
