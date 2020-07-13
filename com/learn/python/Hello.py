@@ -1,6 +1,6 @@
-import requests
+from datetime import datetime
 
-print(requests.get("https://movie.douban.com/top250?start=0&filter="))
+print(str(datetime.now()))
 
 
 

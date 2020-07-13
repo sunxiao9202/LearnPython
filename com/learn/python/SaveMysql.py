@@ -7,10 +7,16 @@ db = pymysql.connect("127.0.0.1", "root", "root", "python")
 cursor = db.cursor()
 
 # 比如我们来创建一张数据表
-sql = """create table beautyGirls (
-   name char(20) not null,
-   age int)"""
+sql = "select keyword from label_keyword"
 cursor.execute(sql)
+
+res = list(cursor.fetchall())
+list = []
+if res is not None:
+    for i in res:
+        list.append(i[0])
+
+print(list)
 
 # 最后我们关闭这个数据库的连接
 db.close()
