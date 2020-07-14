@@ -1,5 +1,4 @@
 import re
-from datetime import datetime
 
 import pymysql
 from bs4 import BeautifulSoup
@@ -9,8 +8,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-# browser = webdriver.Chrome()
-browser = webdriver.PhantomJS()
+browser = webdriver.Chrome()
+# browser = webdriver.PhantomJS()
 WAIT = WebDriverWait(browser, 10)
 browser.set_window_size(1400, 900)
 
@@ -30,49 +29,43 @@ def load_data():
     return listData
 
 
-def search(key1, key2):
+def search():
     try:
         browser.get("https://www.baidu.com/")
         input = WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#kw")))
         submit = WAIT.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#su')))
-        input.send_keys(key1 + ' ' + key2)
+        input.send_keys("测试1")
         submit.click()
-
         WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.nums_text')))
-        html = browser.page_source
-        soup = BeautifulSoup(html, 'lxml')
-        item = soup.find(class_='nums_text').text
-        item = re.sub(r'[^\d.]', '', item)
-        return item
+        return 0
     except TimeoutException:
-        return search(key1, key2)
+        return search()
 
 
-def saveData(n, entry1, entry2, num):
-    sql = "INSERT INTO `label_keyword_relation`(priKeyword,keyword,num) VALUES('{0}','{1}',{2})".format(entry1, entry2,
-                                                                                                        num)
-    cursor.execute(sql)
-    db.commit()
-    print(str(n) + "." + entry1 + " " + entry2 + "：" + str(num) + "   " + str(datetime.now()))
+def next_search(entry):
+    input = WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#kw")))
+    submit = WAIT.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#su')))
+    input.clear()
+    input.send_keys(entry)
+    submit.click()
+
+
+    WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.nums_text')))
+    html = browser.page_source
+    soup = BeautifulSoup(html, 'lxml')
+    item = soup.find(class_='nums_text').text
+    item = re.sub(r'[^\d.]', '', item)
+    return item
 
 
 def main():
     listData = load_data()
     if listData is not None:
-        n = 1
-        i = 0
-        while i < len(listData):
-            j = 0
-            while j < len(listData):
-                entry1 = listData[i]
-                entry2 = listData[j]
-                if entry1 != entry2:
-                    num = search(entry1, entry2)
-                    if num is not None:
-                        saveData(n, entry1, entry2, num)
-                        n = n + 1
-                j = j + 1
-            i = i + 1
+        search()
+        for entry in listData:
+            num = next_search(entry)
+            if num is not None:
+                print(entry + ": " + str(num))
 
 
 if __name__ == '__main__':
