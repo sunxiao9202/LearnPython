@@ -1,5 +1,3 @@
-import re
-
 import pymysql
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -18,8 +16,7 @@ cursor = db.cursor()
 
 
 def load_data():
-    # 比如我们来创建一张数据表
-    sql = "select id,keyword from label_keyword"
+    sql = "SELECT id,keyword FROM `label_keyword_relation` WHERE priKeyword='刺客' AND num>=100"
     cursor.execute(sql)
     res = list(cursor.fetchall())
     listData = []
@@ -29,43 +26,66 @@ def load_data():
     return listData
 
 
-def search():
+def search(key1, key2):
     try:
         browser.get("https://www.baidu.com/")
         input = WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#kw")))
         submit = WAIT.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#su')))
-        input.send_keys("测试1")
+        input.send_keys(key1 + ' ' + key2)
         submit.click()
-        WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.nums_text')))
-        return 0
+        get_source(key1, key2)
     except TimeoutException:
-        return search()
+        return search(key1, key2)
 
 
-def next_search(entry):
-    input = WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#kw")))
-    submit = WAIT.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#su')))
-    input.clear()
-    input.send_keys(entry)
-    submit.click()
+def next_page(key1, key2, page_num):
+    try:
+        print('获取' + str(page_num) + '页数据')
+        if page_num == 2:
+            next_btn = WAIT.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#page > div > a.n')))
+        else:
+            next_btn = WAIT.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#page > div > a:last-child')))
+        next_btn.click()
+        WAIT.until(EC.text_to_be_present_in_element((By.CSS_SELECTOR, '#page > div > strong > span.pc'), str(page_num)))
+        get_source(key1, key2)
+    except TimeoutException:
+        browser.refresh()
+        return next_page(key1, key2, page_num)
 
 
-    WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.nums_text')))
+def get_source(key1, key2):
+    WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, '#page')))
     html = browser.page_source
     soup = BeautifulSoup(html, 'lxml')
-    item = soup.find(class_='nums_text').text
-    item = re.sub(r'[^\d.]', '', item)
-    return item
+    save_data(key1, key2, soup)
+
+
+def save_data(key1, key2, soup):
+    list = soup.find(id='content_left').find_all(class_='c-container')
+    for item in list:
+        item_title = item.find('a').text.replace(' ', '')
+        print("爬取：" + item_title)
+        sql = "INSERT INTO `label_keyword_search`(priKeyword,keyword,title) VALUES('{0}','{1}','{2}')".format(key1,
+                                                                                                              key2,
+                                                                                                              item_title)
+        cursor.execute(sql)
+        db.commit()
 
 
 def main():
     listData = load_data()
     if listData is not None:
-        search()
-        for entry in listData:
-            num = next_search(entry)
-            if num is not None:
-                print(entry + ": " + str(num))
+        j = 0
+        while j < len(listData):
+            entry1 = '刺客'
+            entry2 = listData[j]
+            if entry1 != entry2:
+                for k in range(0, 10):
+                    if k == 0:
+                        search(entry1, entry2)
+                    else:
+                        next_page(entry1, entry2, k + 1)
+            j = j + 1
 
 
 if __name__ == '__main__':
