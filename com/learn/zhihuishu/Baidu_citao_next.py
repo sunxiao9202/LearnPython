@@ -16,7 +16,7 @@ cursor = db.cursor()
 
 
 def load_data():
-    sql = "SELECT id,keyword FROM `label_keyword_relation` WHERE priKeyword='刺客' AND num>=100"
+    sql = "SELECT id,keyword FROM `label_keyword_relation` WHERE priKeyword='契约经济学' AND num>=100"
     cursor.execute(sql)
     res = list(cursor.fetchall())
     listData = []
@@ -48,9 +48,8 @@ def next_page(key1, key2, page_num):
         next_btn.click()
         WAIT.until(EC.text_to_be_present_in_element((By.CSS_SELECTOR, '#page > div > strong > span.pc'), str(page_num)))
         get_source(key1, key2)
-    except TimeoutException:
-        browser.refresh()
-        return next_page(key1, key2, page_num)
+    except Exception:
+        return
 
 
 def get_source(key1, key2):
@@ -63,13 +62,16 @@ def get_source(key1, key2):
 def save_data(key1, key2, soup):
     list = soup.find(id='content_left').find_all(class_='c-container')
     for item in list:
-        item_title = item.find('a').text.replace(' ', '')
+        item_title = item.find('a').text.replace(' ', '').replace('\'', '')
         print("爬取：" + item_title)
-        sql = "INSERT INTO `label_keyword_search`(priKeyword,keyword,title) VALUES('{0}','{1}','{2}')".format(key1,
-                                                                                                              key2,
-                                                                                                              item_title)
-        cursor.execute(sql)
-        db.commit()
+        try:
+            sql = "INSERT INTO `label_keyword_search`(priKeyword,keyword,title) VALUES('{0}','{1}','{2}')".format(key1,
+                                                                                                                  key2,
+                                                                                                                  item_title)
+            cursor.execute(sql)
+            db.commit()
+        except Exception:
+            continue
 
 
 def main():
@@ -77,7 +79,7 @@ def main():
     if listData is not None:
         j = 0
         while j < len(listData):
-            entry1 = '刺客'
+            entry1 = '契约经济学'
             entry2 = listData[j]
             if entry1 != entry2:
                 for k in range(0, 10):
