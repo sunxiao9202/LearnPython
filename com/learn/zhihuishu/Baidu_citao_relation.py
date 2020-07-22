@@ -59,7 +59,7 @@ def saveData(n, entry1, entry2, num):
 def main():
     listData = load_data()
     if listData is not None:
-        n = 1
+        n = 36
         i = 0
         while i < len(listData):
             j = 0

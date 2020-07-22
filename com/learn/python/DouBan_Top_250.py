@@ -4,12 +4,15 @@ import requests
 from bs4 import BeautifulSoup
 import openpyxl
 
+from com.learn.python.utils import IpProxy
+
 
 def request_douban(url):
     try:
+        proxies = IpProxy.get_proxy()
         response = requests.get(url, headers={
             'User-Agent': 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0)',
-        })
+        }, proxies=proxies)
         if response.status_code == 200:
             return response.text
     except requests.RequestException:
