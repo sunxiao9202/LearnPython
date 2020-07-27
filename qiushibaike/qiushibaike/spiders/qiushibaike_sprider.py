@@ -1,7 +1,7 @@
 import scrapy
 from scrapy.spiders import Spider
 
-from qiushibaike.qiushibaike.items import QiushibaikeItem
+from qiushibaike.items import QiushibaikeItem
 
 
 class QiushiSpider(Spider):
