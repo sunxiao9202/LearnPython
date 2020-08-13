@@ -16,9 +16,9 @@ cursor = db.cursor()
 
 def search(key):
     try:
-        browser.get("http://www.baike.com")
-        input = WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".react-autosuggest__input")))
-        submit = WAIT.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '.searchIconIndex')))
+        browser.get("http://baike.baidu.com")
+        input = WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#query")))
+        submit = WAIT.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#search')))
         input.send_keys(key)
         submit.click()
         get_source(key)
@@ -27,27 +27,26 @@ def search(key):
 
 
 def get_source(key):
-    WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.rc-head-info-content')))
+    WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.basic-info')))
     html = browser.page_source
     soup = BeautifulSoup(html, 'lxml')
     save_data(key, soup)
 
 
 def save_data(entity, soup):
-    content = soup.find(class_='summary')
-    list = content.find_all(class_='content-p')
-    for item in list:
-        item_summary = item.get_text()
-        if item_summary is not None:
-            print("爬取到key："+entity+"  summary："+item_summary)
-            sql = "INSERT INTO `toutiao_summary`(entity,summary) VALUES('{0}','{1}')".format(
-                entity,
-                item_summary)
-            try:
-                cursor.execute(sql)
-                db.commit()
-            except Exception:
-                continue
+    content = soup.find_all(class_='basicInfo-block')
+    if content and len(content) > 0:
+        for content_item in content:
+            list = content_item.find_all(class_='basicInfo-item')
+            if list and len(list) > 0:
+                for item in list:
+                    if item.name == 'dt':
+                        item_name = item.get_text()
+                        item_value = None
+                    else:
+                        item_value = item.get_text()
+                    if item_value:
+                        print("爬取到：" + item_name + ":" + item_value)
 
 
 if __name__ == '__main__':

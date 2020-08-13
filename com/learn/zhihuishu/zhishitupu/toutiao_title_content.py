@@ -87,7 +87,7 @@ def save_data(entity, soup):
 def main():
     listData = load_data()
     if listData is not None:
-        i = 131
+        i = 0
         while i < len(listData):
             entity = listData[i]
             search(entity)

@@ -29,9 +29,9 @@ def load_data():
 
 def search(entity):
     try:
-        browser.get("http://www.baike.com")
-        input = WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".react-autosuggest__input")))
-        submit = WAIT.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '.searchIconIndex')))
+        browser.get("http://baike.baidu.com")
+        input = WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#query")))
+        submit = WAIT.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#search')))
         input.send_keys(entity)
         submit.click()
         get_source(entity)
@@ -41,7 +41,7 @@ def search(entity):
 
 def get_source(entity):
     try:
-        WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.rc-head-info-content')))
+        WAIT.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.basic-info')))
         html = browser.page_source
         soup = BeautifulSoup(html, 'lxml')
         save_data(entity, soup)
@@ -50,20 +50,28 @@ def get_source(entity):
 
 
 def save_data(entity, soup):
-    list = soup.find(class_='rc-head-info-content').find_all('dl', class_='bk-padding-bottom-small')
-    for item in list:
-        item_property = item.find("dt").get_text()
-        item_value = item.find_all("span")[0].string
-        if item_property is not None and item_value is not None:
-            print("爬取到entity:" + entity + "  property:" + item_property + "  value:" + item_value)
-            try:
-                sql = "INSERT INTO `toutiao_label`(entity,property,value) VALUES('{0}','{1}','{2}')".format(entity,
-                                                                                                            item_property,
-                                                                                                            item_value)
-                cursor.execute(sql)
-                db.commit()
-            except Exception:
-                continue
+    content = soup.find_all(class_='basicInfo-block')
+    if content and len(content) > 0:
+        for content_item in content:
+            list = content_item.find_all(class_='basicInfo-item')
+            if list and len(list) > 0:
+                for item in list:
+                    if item.name == 'dt':
+                        item_name = item.get_text()
+                        item_value = None
+                    else:
+                        item_value = item.get_text()
+                    if item_value:
+                        print("爬取到：" + item_name + ":" + item_value)
+                        try:
+                            sql = "INSERT INTO `baidu_label`(entity,property,value) VALUES('{0}','{1}','{2}')".format(
+                                entity,
+                                item_name,
+                                item_value)
+                            cursor.execute(sql)
+                            db.commit()
+                        except Exception:
+                            continue
 
 
 def main():
