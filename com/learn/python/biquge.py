@@ -68,6 +68,7 @@ if __name__ == '__main__':
 
     for i in range(d.nums):
         d.save_txt(d.names[i], '斗罗大陆.txt', d.get_contents(d.urls[i]))
-        sys.stdout.write("  已经下载：%.2f%%" % float(i / d.nums * 100) + '\r')
+        print("第" + str(i) + "章：" + d.names[i])
+        # sys.stdout.write("  已经下载：%.2f%%" % float(i / d.nums * 100) + '\r')
         # sys.stdout.flush()
     print('《斗罗大陆》下载完成')
